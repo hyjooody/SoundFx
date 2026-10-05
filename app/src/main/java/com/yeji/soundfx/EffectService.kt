@@ -83,6 +83,7 @@ class EffectService : Service() {
         remute()
         mainHandler.postDelayed({ remute(); rebuildTrack = true }, 500)
         mainHandler.postDelayed({ remute(); rebuildTrack = true }, 2000)
+        mainHandler.postDelayed({ remute(); rebuildTrack = true }, 4000)
     }
 
     /** 기기가 바뀔 때 시스템이 음소거를 풀어버리는 경우가 있어서 다시 걸어 둠 */
@@ -367,6 +368,7 @@ class EffectService : Service() {
                 val fBuf = FloatArray(FRAMES * 2)
                 r.startRecording()
                 rebuildTrack = true
+                var routeTick = 0
                 while (loop) {
                     // 출력 기기가 바뀌었으면 트랙을 새로 만들어서 새 기기로만 나가게
                     if (rebuildTrack) {
@@ -381,6 +383,17 @@ class EffectService : Service() {
                         track = t
                     }
                     val out = track ?: continue
+
+                    // 약 0.5초마다 '실제로' 어디로 나가는지 확인
+                    // 유선(USB) 이어폰은 꽂고 나서 준비되는 데 몇 초 걸려서, 그 전에 연결하면 스피커로 새어 나감
+                    // → 원하는 기기와 실제 출력이 다르면 다시 연결
+                    if (hideMode && ++routeTick % 25 == 0) {
+                        val want = findHeadset()
+                        val routed = out.routedDevice
+                        val wrong = if (want != null) routed == null || routed.id != want.id
+                                    else routed != null && routed.type in HEADSET_TYPES
+                        if (wrong) rebuildTrack = true
+                    }
 
                     val n = r.read(inBuf, 0, inBuf.size)
                     if (n <= 0) continue

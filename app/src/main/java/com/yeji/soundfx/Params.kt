@@ -22,4 +22,4 @@ fun Params.withOn(i: Int, v: Boolean) = copy(on = on.toMutableList().also { it[i
 fun Params.withAmount(i: Int, v: Float) = copy(amount = amount.toMutableList().also { it[i] = v.coerceIn(0f, 1f) })
 
 /** 화면에 표시되는 버전 — 최신 APK가 깔렸는지 확인용 */
-const val APP_VERSION = "v1.8"
+const val APP_VERSION = "v1.9"
