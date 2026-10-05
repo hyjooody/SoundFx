@@ -28,6 +28,9 @@ class EffectService : Service() {
         val running = MutableStateFlow(false)
         /** 앱 화면과 상단바 패널이 같이 보는 설정값 */
         val paramsFlow = MutableStateFlow(Params())
+        /** 소리 없이 10분 지나면 자동으로 끄기 (앱에서 켜고 끔) */
+        val autoOff = MutableStateFlow(true)
+        private const val AUTO_OFF_MS = 10L * 60 * 1000
         val fxParams: Params get() = paramsFlow.value
         const val EXTRA_CODE = "code"
         const val EXTRA_DATA = "data"
@@ -71,6 +74,7 @@ class EffectService : Service() {
     @Volatile private var rebuildTrack = false     // 출력 기기가 바뀌면 오디오 트랙을 새로 만들기
     @Volatile private var toHeadset = false        // 지금 이어폰으로 내보내는 중인지
     @Volatile private var pausedByUnplug = false
+    @Volatile private var silentMs = 0L      // 원본 소리가 안 들어온 시간
     @Volatile private var routedInfo = "-"   // 트랙이 실제로 나가고 있는 기기 (확인용)   // 이어폰 빠져서 일시정지된 상태
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -198,6 +202,8 @@ class EffectService : Service() {
             append(" · 접근성 ").append(am.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY))
             append(" · 앱 증폭 ").append(gainPct).append("%")
             if (pausedByUnplug) append(" · 일시정지됨")
+            if (autoOff.value && silentMs >= 60_000L)
+                append("\n소리 없음 ").append(silentMs / 60_000L).append("분 · 10분 되면 자동으로 꺼져요")
             append("\n실제 출력: ").append(routedInfo)
             append(" · 접근성 음량 ").append(am.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY))
             append("/").append(am.getStreamMaxVolume(AudioManager.STREAM_ACCESSIBILITY))
@@ -504,11 +510,16 @@ class EffectService : Service() {
                     val n = r.read(inBuf, 0, inBuf.size)
                     if (n <= 0) continue
 
-                    if (pausedByUnplug) {
-                        // 음악이 다시 재생되면(소리가 들어오면) 자동으로 해제
-                        var peak = 0
-                        for (i in 0 until n) { val v = kotlin.math.abs(inBuf[i].toInt()); if (v > peak) peak = v }
-                        if (peak > 200) pausedByUnplug = false
+                    var peak = 0
+                    for (i in 0 until n) { val v = kotlin.math.abs(inBuf[i].toInt()); if (v > peak) peak = v }
+                    // 음악이 다시 재생되면(소리가 들어오면) 일시정지 해제
+                    if (pausedByUnplug && peak > 200) pausedByUnplug = false
+                    // 무음 시간 재기 → 10분 넘으면 자동으로 끄기 (끄면 알람·미디어 음량도 원래대로)
+                    if (peak > 200) silentMs = 0L else silentMs += (n / 2) * 1000L / SR
+                    if (autoOff.value && silentMs >= AUTO_OFF_MS && loop) {
+                        loop = false
+                        mainHandler.post { stopSelf() }
+                        break
                     }
 
                     if (pausedByUnplug || softMute) {

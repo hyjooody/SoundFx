@@ -40,7 +40,18 @@ object FxNotification {
         // 패널은 액티비티라서 누르면 상단바가 자동으로 접히고, 보던 앱 위에 슬라이더 창이 뜸
         val panelPi = PendingIntent.getActivity(
             ctx, 9,
-            Intent(ctx, PanelActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            Intent(ctx, PanelActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .putExtra(PanelActivity.EXTRA_VOLUME_ONLY, false),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        // 음량만 바로 조절하는 작은 창
+        val volPi = PendingIntent.getActivity(
+            ctx, 10,
+            Intent(ctx, PanelActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .putExtra(PanelActivity.EXTRA_VOLUME_ONLY, true),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
@@ -52,6 +63,7 @@ object FxNotification {
             small.setOnClickPendingIntent(CHIP[i], servicePi(ctx, ACTION_TOGGLE, 2, i))
         }
         small.setOnClickPendingIntent(R.id.chip_panel, panelPi)
+        small.setOnClickPendingIntent(R.id.chip_vol, volPi)
         small.setOnClickPendingIntent(R.id.chip_stop, stopPi)
 
         return Notification.Builder(ctx, CH)
@@ -64,7 +76,8 @@ object FxNotification {
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setDeleteIntent(servicePi(ctx, ACTION_REPOST, 8))
-            .addAction(Notification.Action.Builder(null as Icon?, "🎛 슬라이더 패널", panelPi).build())
+            .addAction(Notification.Action.Builder(null as Icon?, "🎛 패널", panelPi).build())
+            .addAction(Notification.Action.Builder(null as Icon?, "🔊 음량", volPi).build())
             .addAction(Notification.Action.Builder(null as Icon?, "■ 이펙터 끄기", stopPi).build())
             .build()
             .apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }

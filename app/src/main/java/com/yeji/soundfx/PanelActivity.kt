@@ -24,12 +24,22 @@ import kotlin.math.roundToInt
 
 /** 상단바에서 여는 슬라이더 패널 — 보던 앱 위에 반투명하게 뜨고, 바깥을 누르면 닫힘 */
 class PanelActivity : ComponentActivity() {
+    companion object { const val EXTRA_VOLUME_ONLY = "volume_only" }
+    private val volumeOnly = mutableStateOf(false)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        volumeOnly.value = intent.getBooleanExtra(EXTRA_VOLUME_ONLY, false)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        volumeOnly.value = intent.getBooleanExtra(EXTRA_VOLUME_ONLY, false)
         enableEdgeToEdge()
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(primary = Color(0xFFB69CFF), secondary = Color(0xFF7FD1C7))) {
                 PanelScreen(
+                    volumeOnly = volumeOnly.value,
                     onClose = { finish() },
                     onStop = {
                         startService(Intent(this@PanelActivity, EffectService::class.java).setAction(EffectService.ACTION_STOP))
@@ -44,7 +54,7 @@ class PanelActivity : ComponentActivity() {
 private val PanelSub = Color(0xFFB8B4CC)
 
 @Composable
-fun PanelScreen(onClose: () -> Unit, onStop: () -> Unit) {
+fun PanelScreen(volumeOnly: Boolean, onClose: () -> Unit, onStop: () -> Unit) {
     val p by EffectService.paramsFlow.collectAsState()
     val running by EffectService.running.collectAsState()
     val set: (Params) -> Unit = { np -> EffectService.paramsFlow.value = np }
@@ -75,7 +85,20 @@ fun PanelScreen(onClose: () -> Unit, onStop: () -> Unit) {
             }
             if (!running) Text("이펙터가 꺼져 있어요. 앱에서 시작을 눌러 주세요.", color = PanelSub, fontSize = 13.sp)
 
-            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+            if (volumeOnly) {
+                // 🔊 버튼으로 열었을 때: 음량 바 하나만 크게
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 12.dp)) {
+                    Text("🔊 음량", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                        modifier = Modifier.weight(1f))
+                    Text("${(p.master.coerceIn(0f, 1f) * 100).roundToInt()}%", color = Color.White, fontSize = 18.sp)
+                }
+                Slider(value = p.master.coerceIn(0f, 1f), onValueChange = { set(p.copy(master = it)) },
+                    valueRange = 0f..1f, modifier = Modifier.fillMaxWidth().height(56.dp))
+                Text("바깥을 누르면 닫혀요.", color = PanelSub, fontSize = 12.sp)
+                Spacer(Modifier.height(8.dp))
+            }
+
+            if (!volumeOnly) Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
                 // 전체 음량
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                     Text("🔊", fontSize = 20.sp)

@@ -69,6 +69,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        EffectService.autoOff.value = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("auto_off", true)
         enableEdgeToEdge()
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(primary = Color(0xFFB69CFF), secondary = Color(0xFF7FD1C7))) {
@@ -123,7 +124,7 @@ fun FxScreen(onStart: (Boolean) -> Unit, onStop: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text("원본 소리 숨기기", color = Color.White, fontWeight = FontWeight.Bold)
                     Text(
-                        "켜면 원래 소리는 안 들리고 이펙트 걸린 소리만 들려요. 작동 중엔 음량 버튼이 이펙트 소리 크기를 조절해요. (시작 전에만 변경 가능)",
+                        "켜면 원래 소리는 안 들리고 이펙트 걸린 소리만 들려요. (시작 전에만 변경 가능)",
                         color = TextSub, fontSize = 12.sp
                     )
                 }
@@ -157,9 +158,29 @@ fun FxScreen(onStart: (Boolean) -> Unit, onStop: () -> Unit) {
         Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2A))) {
             Column(Modifier.padding(16.dp)) {
                 Text("🔊 음량  ${(p.master.coerceIn(0f, 1f) * 100).roundToInt()}%", color = Color.White, fontWeight = FontWeight.Bold)
-                Text("작동 중엔 폰의 알람 음량을 직접 조절해요. 폰 옆 음량 버튼과 같이 움직이고, 끄면 원래 음량으로 돌아가요.",
-                    color = TextSub, fontSize = 12.sp)
+                Text("작동 중엔 이 음량 바로만 조절하세요. 폰 옆 음량 버튼은 정확하지 않아서 쓰지 않는 게 좋아요. " +
+                    "상단바 알림의 🔊 버튼을 누르면 음량 바만 바로 열려요. 끄면 원래 음량으로 돌아가요.",
+                    color = TextSub, fontSize = 12.sp, lineHeight = 17.sp)
                 Slider(value = p.master.coerceIn(0f, 1f), onValueChange = { set(p.copy(master = it)) }, valueRange = 0f..1f)
+            }
+        }
+
+        // 자동 끄기 (잠들었을 때 알람 걱정 방지)
+        val autoOff by EffectService.autoOff.collectAsState()
+        val ctx2 = LocalContext.current
+        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2A))) {
+            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("😴 소리 없으면 10분 뒤 자동으로 끄기", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("음악이 멈춘 채로 10분이 지나면 이펙터가 꺼지고 알람·미디어 음량이 원래대로 돌아가요. 켜 놓고 잠들어도 아침 알람이 정상으로 울려요.",
+                        color = TextSub, fontSize = 12.sp, lineHeight = 17.sp)
+                }
+                Spacer(Modifier.width(8.dp))
+                Switch(checked = autoOff, onCheckedChange = { v ->
+                    EffectService.autoOff.value = v
+                    ctx2.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+                        .edit().putBoolean("auto_off", v).apply()
+                })
             }
         }
 

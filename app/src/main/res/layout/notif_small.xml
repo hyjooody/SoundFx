@@ -23,6 +23,9 @@
     <TextView android:id="@+id/chip_panel" android:layout_width="0dp" android:layout_weight="1"
         android:layout_height="34dp" android:layout_marginEnd="4dp" android:gravity="center"
         android:textSize="16sp" android:background="@drawable/pill_btn" android:text="🎛" />
+    <TextView android:id="@+id/chip_vol" android:layout_width="0dp" android:layout_weight="1"
+        android:layout_height="34dp" android:layout_marginEnd="4dp" android:gravity="center"
+        android:textSize="16sp" android:background="@drawable/pill_btn" android:text="🔊" />
     <TextView android:id="@+id/chip_stop" android:layout_width="0dp" android:layout_weight="1"
         android:layout_height="34dp" android:gravity="center"
         android:textSize="16sp" android:background="@drawable/pill_btn" android:text="■" android:textColor="#E57373" />
