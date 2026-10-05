@@ -95,7 +95,11 @@ fun FxScreen(onStart: (Boolean) -> Unit, onStop: () -> Unit) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("소리 이펙터", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text("소리 이펙터", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Spacer(Modifier.width(8.dp))
+            Text(APP_VERSION, fontSize = 14.sp, color = TextSub, modifier = Modifier.padding(bottom = 4.dp))
+        }
         Text(
             if (running) "● 작동 중 — 폰에서 나는 소리에 이펙트가 걸리고 있어요" else "○ 꺼져 있어요",
             color = if (running) Color(0xFF7FD1C7) else TextSub, fontSize = 14.sp

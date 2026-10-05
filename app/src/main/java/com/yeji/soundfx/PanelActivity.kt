@@ -68,7 +68,7 @@ fun PanelScreen(onClose: () -> Unit, onStop: () -> Unit) {
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("🎛 소리 이펙터", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold,
+                Text("🎛 소리 이펙터 $APP_VERSION", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f))
                 if (running) TextButton(onClick = onStop) { Text("이펙터 끄기", color = Color(0xFFE57373)) }
                 TextButton(onClick = onClose) { Text("닫기") }
