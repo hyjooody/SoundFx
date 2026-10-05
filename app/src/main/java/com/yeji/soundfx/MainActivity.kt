@@ -104,6 +104,10 @@ fun FxScreen(onStart: (Boolean) -> Unit, onStop: () -> Unit) {
             if (running) "● 작동 중 — 폰에서 나는 소리에 이펙트가 걸리고 있어요" else "○ 꺼져 있어요",
             color = if (running) Color(0xFF7FD1C7) else TextSub, fontSize = 14.sp
         )
+        val dbg by EffectService.status.collectAsState()
+        if (running && dbg.isNotEmpty()) {
+            Text(dbg, color = TextSub, fontSize = 11.sp, lineHeight = 15.sp)
+        }
         Button(
             onClick = { if (running) onStop() else onStart(hide) },
             modifier = Modifier.fillMaxWidth().height(56.dp),

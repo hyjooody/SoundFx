@@ -39,9 +39,13 @@ class EffectService : Service() {
             AudioDeviceInfo.TYPE_WIRED_HEADSET,
             AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
             AudioDeviceInfo.TYPE_USB_HEADSET,
+            AudioDeviceInfo.TYPE_USB_DEVICE,
+            AudioDeviceInfo.TYPE_HEARING_AID,
             AudioDeviceInfo.TYPE_BLE_HEADSET,
             AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
         )
+        /** 앱 화면에 보여줄 현재 상태 (문제 확인용) */
+        val status = MutableStateFlow("")
     }
 
     private var projection: MediaProjection? = null
@@ -105,6 +109,21 @@ class EffectService : Service() {
             am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE))
             am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE))
         } catch (_: Exception) { }
+        // 음악 앱들은 '오디오 포커스'를 뺏기면 스스로 멈춤 → 잠깐 가져왔다가 돌려줌
+        try {
+            val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                .build()
+            am.requestAudioFocus(req)
+            mainHandler.postDelayed({
+                try { am.abandonAudioFocusRequest(req) } catch (_: Exception) { }
+            }, 400)
+        } catch (_: Exception) { }
         // 생활 소음·LP 잡음 같은 이펙트 소리도 음악이 다시 나올 때까지 멈춤
         pausedByUnplug = true
     }
@@ -115,16 +134,52 @@ class EffectService : Service() {
      */
     private fun applyRoute(t: AudioTrack) {
         if (!hideMode) { toHeadset = false; return }
-        val am = getSystemService(AudioManager::class.java)
-        val outs = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-        var target: AudioDeviceInfo? = null
-        for (type in HEADSET_TYPES) {
-            target = outs.firstOrNull { it.type == type }
-            if (target != null) break
-        }
-        toHeadset = target != null
-        if (target == null) target = outs.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+        val headset = findHeadset()
+        toHeadset = headset != null
+        val target = headset ?: getSystemService(AudioManager::class.java)
+            .getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
         try { t.setPreferredDevice(target) } catch (_: Exception) { }
+    }
+
+    private fun findHeadset(): AudioDeviceInfo? {
+        val outs = getSystemService(AudioManager::class.java).getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+        for (type in HEADSET_TYPES) {
+            val d = outs.firstOrNull { it.type == type }
+            if (d != null) return d
+        }
+        return null
+    }
+
+    /**
+     * 연결 신호를 놓치는 경우가 있어서 0.3초마다 직접 확인:
+     * 이어폰이 새로 생기거나 없어지면 출력 다시 연결, 빠지면 일시정지
+     */
+    private var lastHeadset: Boolean? = null
+    private fun checkDevices() {
+        val hs = findHeadset()
+        val now = hs != null
+        val prev = lastHeadset
+        lastHeadset = now
+        if (prev != null && prev != now) {
+            if (prev && !now) pauseMedia()
+            scheduleRebuild()
+        }
+        val am = getSystemService(AudioManager::class.java)
+        val gainPct = when {
+            !hideMode -> (fxParams.master * 100).roundToInt()
+            toHeadset -> (fxParams.master.coerceIn(0f, 1f).let { it * it } * 100).roundToInt()
+            else -> 100
+        }
+        status.value = buildString {
+            append("출력: ").append(if (hs != null) "이어폰 (${hs.productName}, 종류 ${hs.type})" else "스피커")
+            append("\n트랙 출력: ").append(if (toHeadset) "이어폰" else "스피커")
+            append(" · 원본 음소거: ").append(if (am.isStreamMute(AudioManager.STREAM_MUSIC)) "O" else "X")
+            append("\n미디어 ").append(am.getStreamVolume(AudioManager.STREAM_MUSIC))
+            append(" · 알람 ").append(am.getStreamVolume(AudioManager.STREAM_ALARM)).append("/").append(maxA)
+            append(" · 앱 증폭 ").append(gainPct).append("%")
+            if (pausedByUnplug) append(" · 일시정지됨")
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -179,7 +234,7 @@ class EffectService : Service() {
         val nm = getSystemService(NotificationManager::class.java)
         // 음량 바 ↔ 폰 알람 음량 연동 (바를 움직이면 알람 음량이, 음량 버튼을 누르면 바가 따라 움직임)
         scope.launch { paramsFlow.collect { applyAlarm(it) } }
-        scope.launch { while (true) { delay(300); pollAlarm() } }
+        scope.launch { while (true) { delay(300); pollAlarm(); checkDevices() } }
         scope.launch {
             paramsFlow.collectLatest {
                 delay(150)
@@ -376,6 +431,7 @@ class EffectService : Service() {
         projection = null
         restoreVolumes()
         running.value = false
+        status.value = ""
         super.onDestroy()
     }
 }
