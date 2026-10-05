@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:paddingTop="2dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/lbl_0" android:layout_width="104dp" android:layout_height="26dp"
+            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:background="@drawable/pill_off" android:singleLine="true" android:paddingStart="10dp" />
+        <TextView android:id="@+id/minus_0" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
+        <ProgressBar android:id="@+id/bar_0" style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="100" />
+        <TextView android:id="@+id/plus_0" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
+        <TextView android:id="@+id/pct_0" android:layout_width="40dp" android:layout_height="26dp"
+            android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/lbl_1" android:layout_width="104dp" android:layout_height="26dp"
+            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:background="@drawable/pill_off" android:singleLine="true" android:paddingStart="10dp" />
+        <TextView android:id="@+id/minus_1" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
+        <ProgressBar android:id="@+id/bar_1" style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="100" />
+        <TextView android:id="@+id/plus_1" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
+        <TextView android:id="@+id/pct_1" android:layout_width="40dp" android:layout_height="26dp"
+            android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/lbl_2" android:layout_width="104dp" android:layout_height="26dp"
+            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:background="@drawable/pill_off" android:singleLine="true" android:paddingStart="10dp" />
+        <TextView android:id="@+id/minus_2" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
+        <ProgressBar android:id="@+id/bar_2" style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="100" />
+        <TextView android:id="@+id/plus_2" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
+        <TextView android:id="@+id/pct_2" android:layout_width="40dp" android:layout_height="26dp"
+            android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/lbl_3" android:layout_width="104dp" android:layout_height="26dp"
+            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:background="@drawable/pill_off" android:singleLine="true" android:paddingStart="10dp" />
+        <TextView android:id="@+id/minus_3" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
+        <ProgressBar android:id="@+id/bar_3" style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="100" />
+        <TextView android:id="@+id/plus_3" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
+        <TextView android:id="@+id/pct_3" android:layout_width="40dp" android:layout_height="26dp"
+            android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/lbl_4" android:layout_width="104dp" android:layout_height="26dp"
+            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:background="@drawable/pill_off" android:singleLine="true" android:paddingStart="10dp" />
+        <TextView android:id="@+id/minus_4" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
+        <ProgressBar android:id="@+id/bar_4" style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="100" />
+        <TextView android:id="@+id/plus_4" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
+        <TextView android:id="@+id/pct_4" android:layout_width="40dp" android:layout_height="26dp"
+            android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
+        <TextView android:id="@+id/noise_type" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="14sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="⇄" android:singleLine="true" android:layout_marginStart="4dp" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/lbl_5" android:layout_width="104dp" android:layout_height="26dp"
+            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:background="@drawable/pill_off" android:singleLine="true" android:paddingStart="10dp" />
+        <TextView android:id="@+id/minus_5" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
+        <ProgressBar android:id="@+id/bar_5" style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="100" />
+        <TextView android:id="@+id/plus_5" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
+        <TextView android:id="@+id/pct_5" android:layout_width="40dp" android:layout_height="26dp"
+            android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/master_lbl" android:layout_width="104dp" android:layout_height="26dp"
+            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:text="🔊 전체 음량" android:singleLine="true" android:paddingStart="10dp" />
+        <TextView android:id="@+id/master_minus" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
+        <ProgressBar android:id="@+id/master_bar" style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="150" />
+        <TextView android:id="@+id/master_plus" android:layout_width="30dp" android:layout_height="26dp"
+            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
+        <TextView android:id="@+id/master_pct" android:layout_width="40dp" android:layout_height="26dp"
+            android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
+    </LinearLayout>
+</LinearLayout>

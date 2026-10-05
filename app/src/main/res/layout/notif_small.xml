@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:id="@+id/chip_0" android:layout_width="0dp" android:layout_weight="1"
+        android:layout_height="32dp" android:layout_marginEnd="4dp" android:gravity="center"
+        android:textSize="16sp" android:background="@drawable/pill_off" />
+    <TextView android:id="@+id/chip_1" android:layout_width="0dp" android:layout_weight="1"
+        android:layout_height="32dp" android:layout_marginEnd="4dp" android:gravity="center"
+        android:textSize="16sp" android:background="@drawable/pill_off" />
+    <TextView android:id="@+id/chip_2" android:layout_width="0dp" android:layout_weight="1"
+        android:layout_height="32dp" android:layout_marginEnd="4dp" android:gravity="center"
+        android:textSize="16sp" android:background="@drawable/pill_off" />
+    <TextView android:id="@+id/chip_3" android:layout_width="0dp" android:layout_weight="1"
+        android:layout_height="32dp" android:layout_marginEnd="4dp" android:gravity="center"
+        android:textSize="16sp" android:background="@drawable/pill_off" />
+    <TextView android:id="@+id/chip_4" android:layout_width="0dp" android:layout_weight="1"
+        android:layout_height="32dp" android:layout_marginEnd="4dp" android:gravity="center"
+        android:textSize="16sp" android:background="@drawable/pill_off" />
+    <TextView android:id="@+id/chip_5" android:layout_width="0dp" android:layout_weight="1"
+        android:layout_height="32dp" android:layout_marginEnd="4dp" android:gravity="center"
+        android:textSize="16sp" android:background="@drawable/pill_off" />
+    <TextView android:id="@+id/chip_stop" android:layout_width="0dp" android:layout_weight="1"
+        android:layout_height="32dp" android:gravity="center" android:text="■"
+        android:textSize="15sp" android:textColor="#E57373" android:background="@drawable/pill_btn" />
+</LinearLayout>
