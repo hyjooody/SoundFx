@@ -24,7 +24,7 @@ class EffectService : Service() {
         val running = MutableStateFlow(false)
         /** 앱 화면과 상단바 패널이 같이 보는 설정값 */
         val paramsFlow = MutableStateFlow(Params())
-        val params: Params get() = paramsFlow.value
+        val fxParams: Params get() = paramsFlow.value
         const val EXTRA_CODE = "code"
         const val EXTRA_DATA = "data"
         const val EXTRA_HIDE = "hide"
@@ -39,15 +39,48 @@ class EffectService : Service() {
     private var savedMusic = -1
     private var savedAlarm = -1
     private val scope = MainScope()
+    private var hideMode = false
+    @Volatile private var outTrack: AudioTrack? = null
+
+    /** 이어폰/블루투스가 연결되거나 빠질 때마다 출력 기기를 다시 지정 */
+    private val deviceCb = object : AudioDeviceCallback() {
+        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) { applyRoute() }
+        override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) { applyRoute() }
+    }
+
+    /**
+     * 알람 채널은 기본적으로 '스피커 + 이어폰' 동시 재생이라서,
+     * 이어폰이 있으면 그 기기로만 나가도록 직접 지정한다.
+     */
+    private fun applyRoute() {
+        val t = outTrack ?: return
+        if (!hideMode) return
+        val am = getSystemService(AudioManager::class.java)
+        val outs = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+        val priority = intArrayOf(
+            AudioDeviceInfo.TYPE_WIRED_HEADSET,
+            AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+            AudioDeviceInfo.TYPE_USB_HEADSET,
+            AudioDeviceInfo.TYPE_BLE_HEADSET,
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
+        )
+        var target: AudioDeviceInfo? = null
+        for (type in priority) {
+            target = outs.firstOrNull { it.type == type }
+            if (target != null) break
+        }
+        if (target == null) target = outs.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+        try { t.setPreferredDevice(target) } catch (_: Exception) { }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> { stopSelf(); return START_NOT_STICKY }
-            FxNotification.ACTION_TOGGLE, FxNotification.ACTION_UP, FxNotification.ACTION_DOWN,
-            FxNotification.ACTION_NOISE, FxNotification.ACTION_MASTER_UP, FxNotification.ACTION_MASTER_DOWN -> {
-                if (projection == null) stopSelf() else handleControl(intent)
+            FxNotification.ACTION_TOGGLE, FxNotification.ACTION_SET,
+            FxNotification.ACTION_NOISE, FxNotification.ACTION_MASTER_SET -> {
+                if (projection == null) stopSelf() else handleControl(intent!!)
                 return START_NOT_STICKY
             }
         }
@@ -56,11 +89,11 @@ class EffectService : Service() {
         val code = intent?.getIntExtra(EXTRA_CODE, 0) ?: 0
         val data: Intent? = if (Build.VERSION.SDK_INT >= 33)
             intent?.getParcelableExtra(EXTRA_DATA, Intent::class.java)
-        else @Suppress("DEPRECATION") intent?.getParcelableExtra(EXTRA_DATA)
+        else @Suppress("DEPRECATION") intent?.getParcelableExtra<Intent>(EXTRA_DATA)
         if (data == null) { stopSelf(); return START_NOT_STICKY }
         val hide = intent!!.getBooleanExtra(EXTRA_HIDE, true)
 
-        startForeground(FxNotification.ID, FxNotification.build(this, params), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+        startForeground(FxNotification.ID, FxNotification.build(this, fxParams), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
 
         val mpm = getSystemService(MediaProjectionManager::class.java)
         val mp = mpm.getMediaProjection(code, data)
@@ -70,7 +103,10 @@ class EffectService : Service() {
         }, Handler(Looper.getMainLooper()))
         projection = mp
 
+        hideMode = hide
         if (hide) hideOriginal()
+        getSystemService(AudioManager::class.java)
+            .registerAudioDeviceCallback(deviceCb, Handler(Looper.getMainLooper()))
         startAudio(mp, hide)
         running.value = true
 
@@ -88,16 +124,14 @@ class EffectService : Service() {
     /** 상단바 패널 버튼 처리 */
     private fun handleControl(intent: Intent) {
         val i = intent.getIntExtra(FxNotification.EXTRA_IDX, 0)
-        val p = params
-        val step = FxNotification.STEP
+        val lvl = intent.getIntExtra(FxNotification.EXTRA_LEVEL, 0)
+        val p = fxParams
         paramsFlow.value = when (intent.action) {
             FxNotification.ACTION_TOGGLE -> p.toggled(i)
-            // +/- 누르면 꺼져 있던 이펙트는 자동으로 켜짐
-            FxNotification.ACTION_UP -> p.withAmount(i, p.amount[i] + step).withOn(i, true)
-            FxNotification.ACTION_DOWN -> p.withAmount(i, p.amount[i] - step).withOn(i, true)
+            // 바를 탭하면 그 위치로 강도 설정 + 꺼져 있었으면 자동으로 켜짐
+            FxNotification.ACTION_SET -> p.withAmount(i, lvl / FxNotification.SEGS.toFloat()).withOn(i, true)
             FxNotification.ACTION_NOISE -> p.copy(noiseType = (p.noiseType + 1) % 3).withOn(Fx.AMBIENT.ordinal, true)
-            FxNotification.ACTION_MASTER_UP -> p.copy(master = (p.master + step).coerceAtMost(1.5f))
-            FxNotification.ACTION_MASTER_DOWN -> p.copy(master = (p.master - step).coerceAtLeast(0f))
+            FxNotification.ACTION_MASTER_SET -> p.copy(master = lvl / 10f)
             else -> p
         }
     }
@@ -170,18 +204,21 @@ class EffectService : Service() {
                 val dsp = Dsp(SR)
                 val inBuf = ShortArray(FRAMES * 2)
                 val fBuf = FloatArray(FRAMES * 2)
+                outTrack = track
+                applyRoute()
                 rec.startRecording()
                 track.play()
                 while (loop) {
                     val n = rec.read(inBuf, 0, inBuf.size)
                     if (n <= 0) continue
                     for (i in 0 until n) fBuf[i] = inBuf[i] / 32768f
-                    dsp.process(fBuf, n / 2, params)
+                    dsp.process(fBuf, n / 2, fxParams)
                     track.write(fBuf, 0, n, AudioTrack.WRITE_BLOCKING)
                 }
             } catch (e: Exception) {
                 Handler(Looper.getMainLooper()).post { stopSelf() }
             } finally {
+                outTrack = null
                 try { rec?.stop() } catch (_: Exception) { }
                 rec?.release()
                 try { track?.stop() } catch (_: Exception) { }
@@ -192,6 +229,7 @@ class EffectService : Service() {
 
     override fun onDestroy() {
         scope.cancel()
+        try { getSystemService(AudioManager::class.java).unregisterAudioDeviceCallback(deviceCb) } catch (_: Exception) { }
         loop = false
         try { worker?.join(800) } catch (_: Exception) { }
         worker = null

@@ -113,7 +113,7 @@ fun FxScreen(onStart: (Boolean) -> Unit, onStop: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text("원본 소리 숨기기", color = Color.White, fontWeight = FontWeight.Bold)
                     Text(
-                        "켜면 원래 소리는 안 들리고 이펙트 걸린 소리만 들려요. 작동 중엔 볼륨 버튼 대신 아래 '전체 음량'을 쓰세요. (시작 전에만 변경 가능)",
+                        "켜면 원래 소리는 안 들리고 이펙트 걸린 소리만 들려요. 작동 중엔 음량 버튼이 이펙트 소리 크기를 조절해요. (시작 전에만 변경 가능)",
                         color = TextSub, fontSize = 12.sp
                     )
                 }

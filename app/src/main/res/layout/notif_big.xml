@@ -2,97 +2,227 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="wrap_content"
     android:orientation="vertical" android:paddingTop="2dp">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
-        <TextView android:id="@+id/lbl_0" android:layout_width="104dp" android:layout_height="26dp"
-            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:background="@drawable/pill_off" android:singleLine="true" android:paddingStart="10dp" />
-        <TextView android:id="@+id/minus_0" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
-        <ProgressBar android:id="@+id/bar_0" style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="100" />
-        <TextView android:id="@+id/plus_0" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
-        <TextView android:id="@+id/pct_0" android:layout_width="40dp" android:layout_height="26dp"
+    <LinearLayout android:layout_width="match_parent" android:layout_height="32dp"
+        android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/icon_0" android:layout_width="40dp" android:layout_height="28dp"
+            android:gravity="center" android:textSize="16sp" android:background="@drawable/pill_off" />
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp"
+            android:layout_marginStart="6dp" android:orientation="horizontal">
+            <TextView android:id="@+id/seg_0_1" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_0_2" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_0_3" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_0_4" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_0_5" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_0_6" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_0_7" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_0_8" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_0_9" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_0_10" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+        </LinearLayout>
+        <TextView android:id="@+id/pct_0" android:layout_width="44dp" android:layout_height="28dp"
             android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
-        <TextView android:id="@+id/lbl_1" android:layout_width="104dp" android:layout_height="26dp"
-            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:background="@drawable/pill_off" android:singleLine="true" android:paddingStart="10dp" />
-        <TextView android:id="@+id/minus_1" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
-        <ProgressBar android:id="@+id/bar_1" style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="100" />
-        <TextView android:id="@+id/plus_1" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
-        <TextView android:id="@+id/pct_1" android:layout_width="40dp" android:layout_height="26dp"
+    <LinearLayout android:layout_width="match_parent" android:layout_height="32dp"
+        android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/icon_1" android:layout_width="40dp" android:layout_height="28dp"
+            android:gravity="center" android:textSize="16sp" android:background="@drawable/pill_off" />
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp"
+            android:layout_marginStart="6dp" android:orientation="horizontal">
+            <TextView android:id="@+id/seg_1_1" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_1_2" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_1_3" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_1_4" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_1_5" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_1_6" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_1_7" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_1_8" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_1_9" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_1_10" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+        </LinearLayout>
+        <TextView android:id="@+id/pct_1" android:layout_width="44dp" android:layout_height="28dp"
             android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
-        <TextView android:id="@+id/lbl_2" android:layout_width="104dp" android:layout_height="26dp"
-            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:background="@drawable/pill_off" android:singleLine="true" android:paddingStart="10dp" />
-        <TextView android:id="@+id/minus_2" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
-        <ProgressBar android:id="@+id/bar_2" style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="100" />
-        <TextView android:id="@+id/plus_2" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
-        <TextView android:id="@+id/pct_2" android:layout_width="40dp" android:layout_height="26dp"
+    <LinearLayout android:layout_width="match_parent" android:layout_height="32dp"
+        android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/icon_2" android:layout_width="40dp" android:layout_height="28dp"
+            android:gravity="center" android:textSize="16sp" android:background="@drawable/pill_off" />
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp"
+            android:layout_marginStart="6dp" android:orientation="horizontal">
+            <TextView android:id="@+id/seg_2_1" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_2_2" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_2_3" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_2_4" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_2_5" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_2_6" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_2_7" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_2_8" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_2_9" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_2_10" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+        </LinearLayout>
+        <TextView android:id="@+id/pct_2" android:layout_width="44dp" android:layout_height="28dp"
             android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
-        <TextView android:id="@+id/lbl_3" android:layout_width="104dp" android:layout_height="26dp"
-            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:background="@drawable/pill_off" android:singleLine="true" android:paddingStart="10dp" />
-        <TextView android:id="@+id/minus_3" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
-        <ProgressBar android:id="@+id/bar_3" style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="100" />
-        <TextView android:id="@+id/plus_3" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
-        <TextView android:id="@+id/pct_3" android:layout_width="40dp" android:layout_height="26dp"
+    <LinearLayout android:layout_width="match_parent" android:layout_height="32dp"
+        android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/icon_3" android:layout_width="40dp" android:layout_height="28dp"
+            android:gravity="center" android:textSize="16sp" android:background="@drawable/pill_off" />
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp"
+            android:layout_marginStart="6dp" android:orientation="horizontal">
+            <TextView android:id="@+id/seg_3_1" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_3_2" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_3_3" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_3_4" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_3_5" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_3_6" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_3_7" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_3_8" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_3_9" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_3_10" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+        </LinearLayout>
+        <TextView android:id="@+id/pct_3" android:layout_width="44dp" android:layout_height="28dp"
             android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
-        <TextView android:id="@+id/lbl_4" android:layout_width="104dp" android:layout_height="26dp"
-            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:background="@drawable/pill_off" android:singleLine="true" android:paddingStart="10dp" />
-        <TextView android:id="@+id/minus_4" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
-        <ProgressBar android:id="@+id/bar_4" style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="100" />
-        <TextView android:id="@+id/plus_4" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
-        <TextView android:id="@+id/pct_4" android:layout_width="40dp" android:layout_height="26dp"
+    <LinearLayout android:layout_width="match_parent" android:layout_height="32dp"
+        android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/icon_4" android:layout_width="40dp" android:layout_height="28dp"
+            android:gravity="center" android:textSize="16sp" android:background="@drawable/pill_off" />
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp"
+            android:layout_marginStart="6dp" android:orientation="horizontal">
+            <TextView android:id="@+id/seg_4_1" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_4_2" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_4_3" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_4_4" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_4_5" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_4_6" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_4_7" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_4_8" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_4_9" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_4_10" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+        </LinearLayout>
+        <TextView android:id="@+id/pct_4" android:layout_width="44dp" android:layout_height="28dp"
             android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
         <TextView android:id="@+id/noise_type" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="14sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="⇄" android:singleLine="true" android:layout_marginStart="4dp" />
+            android:layout_marginStart="4dp" android:gravity="center" android:text="⇄" android:textSize="14sp"
+            android:textColor="#B69CFF" android:background="@drawable/pill_btn" />
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
-        <TextView android:id="@+id/lbl_5" android:layout_width="104dp" android:layout_height="26dp"
-            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:background="@drawable/pill_off" android:singleLine="true" android:paddingStart="10dp" />
-        <TextView android:id="@+id/minus_5" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
-        <ProgressBar android:id="@+id/bar_5" style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="100" />
-        <TextView android:id="@+id/plus_5" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
-        <TextView android:id="@+id/pct_5" android:layout_width="40dp" android:layout_height="26dp"
+    <LinearLayout android:layout_width="match_parent" android:layout_height="32dp"
+        android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/icon_5" android:layout_width="40dp" android:layout_height="28dp"
+            android:gravity="center" android:textSize="16sp" android:background="@drawable/pill_off" />
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp"
+            android:layout_marginStart="6dp" android:orientation="horizontal">
+            <TextView android:id="@+id/seg_5_1" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_5_2" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_5_3" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_5_4" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_5_5" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_5_6" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_5_7" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_5_8" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_5_9" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_5_10" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+        </LinearLayout>
+        <TextView android:id="@+id/pct_5" android:layout_width="44dp" android:layout_height="28dp"
             android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="30dp" android:orientation="horizontal" android:gravity="center_vertical">
-        <TextView android:id="@+id/master_lbl" android:layout_width="104dp" android:layout_height="26dp"
-            android:gravity="center_vertical" android:textSize="13sp" android:textColor="#8A8AA0" android:text="🔊 전체 음량" android:singleLine="true" android:paddingStart="10dp" />
-        <TextView android:id="@+id/master_minus" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="−" android:singleLine="true" android:layout_marginStart="6dp" />
-        <ProgressBar android:id="@+id/master_bar" style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:layout_marginStart="6dp" android:layout_marginEnd="6dp" android:max="150" />
-        <TextView android:id="@+id/master_plus" android:layout_width="30dp" android:layout_height="26dp"
-            android:gravity="center" android:textSize="16sp" android:textColor="#B69CFF" android:background="@drawable/pill_btn" android:text="+" android:singleLine="true" />
-        <TextView android:id="@+id/master_pct" android:layout_width="40dp" android:layout_height="26dp"
+    <LinearLayout android:layout_width="match_parent" android:layout_height="32dp"
+        android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/master_icon" android:layout_width="40dp" android:layout_height="28dp"
+            android:gravity="center" android:textSize="16sp" android:background="@drawable/pill_off" />
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="26dp"
+            android:layout_marginStart="6dp" android:orientation="horizontal">
+            <TextView android:id="@+id/seg_m_1" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_2" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_3" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_4" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_5" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_6" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_7" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_8" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_9" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_10" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_11" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_12" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_13" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_14" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+            <TextView android:id="@+id/seg_m_15" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginEnd="2dp" android:background="@drawable/seg_off" />
+        </LinearLayout>
+        <TextView android:id="@+id/master_pct" android:layout_width="44dp" android:layout_height="28dp"
             android:gravity="center_vertical|end" android:textSize="12sp" android:textColor="#8A8AA0" android:singleLine="true" />
     </LinearLayout>
 </LinearLayout>
