@@ -43,6 +43,7 @@ class EffectService : Service() {
     private var minA = 0
     private var maxA = 15
     private var lastAlarm = -1
+    private var ignoreUntil = 0L   // 앱이 직접 음량을 바꾼 직후엔 '음량 버튼 눌림'으로 착각하지 않게
     @Volatile private var softMute = false
     @Volatile private var outTrack: AudioTrack? = null
 
@@ -176,10 +177,10 @@ class EffectService : Service() {
         val actual = target.coerceIn(minA, maxA)
         if (actual != lastAlarm) {
             val am = getSystemService(AudioManager::class.java)
-            try {
-                am.setStreamVolume(AudioManager.STREAM_ALARM, actual, 0)
-                lastAlarm = am.getStreamVolume(AudioManager.STREAM_ALARM)
-            } catch (_: Exception) { }
+            try { am.setStreamVolume(AudioManager.STREAM_ALARM, actual, 0) } catch (_: Exception) { }
+            // 음량 변경은 시스템에 조금 늦게 반영될 수 있어서, 1초 동안은 바뀐 값을 내 변경으로 간주
+            lastAlarm = actual
+            ignoreUntil = SystemClock.uptimeMillis() + 1000
         }
     }
 
@@ -187,6 +188,7 @@ class EffectService : Service() {
     private fun pollAlarm() {
         if (!hideMode || lastAlarm < 0) return
         val v = getSystemService(AudioManager::class.java).getStreamVolume(AudioManager.STREAM_ALARM)
+        if (SystemClock.uptimeMillis() < ignoreUntil) { lastAlarm = v; return }
         if (v != lastAlarm) {
             lastAlarm = v
             paramsFlow.value = fxParams.copy(master = v.toFloat() / maxA)
