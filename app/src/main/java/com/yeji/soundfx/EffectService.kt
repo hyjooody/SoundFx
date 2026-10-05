@@ -24,7 +24,7 @@ class EffectService : Service() {
         val running = MutableStateFlow(false)
         /** 앱 화면과 상단바 패널이 같이 보는 설정값 */
         val paramsFlow = MutableStateFlow(Params())
-        val fxParams: Params get() = paramsFlow.value
+        val params: Params get() = paramsFlow.value
         const val EXTRA_CODE = "code"
         const val EXTRA_DATA = "data"
         const val EXTRA_HIDE = "hide"
@@ -47,7 +47,7 @@ class EffectService : Service() {
             ACTION_STOP -> { stopSelf(); return START_NOT_STICKY }
             FxNotification.ACTION_TOGGLE, FxNotification.ACTION_UP, FxNotification.ACTION_DOWN,
             FxNotification.ACTION_NOISE, FxNotification.ACTION_MASTER_UP, FxNotification.ACTION_MASTER_DOWN -> {
-                if (projection == null) stopSelf() else handleControl(intent!!)
+                if (projection == null) stopSelf() else handleControl(intent)
                 return START_NOT_STICKY
             }
         }
@@ -56,11 +56,11 @@ class EffectService : Service() {
         val code = intent?.getIntExtra(EXTRA_CODE, 0) ?: 0
         val data: Intent? = if (Build.VERSION.SDK_INT >= 33)
             intent?.getParcelableExtra(EXTRA_DATA, Intent::class.java)
-        else @Suppress("DEPRECATION") intent?.getParcelableExtra<Intent>(EXTRA_DATA)
+        else @Suppress("DEPRECATION") intent?.getParcelableExtra(EXTRA_DATA)
         if (data == null) { stopSelf(); return START_NOT_STICKY }
         val hide = intent!!.getBooleanExtra(EXTRA_HIDE, true)
 
-        startForeground(FxNotification.ID, FxNotification.build(this, fxParams), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+        startForeground(FxNotification.ID, FxNotification.build(this, params), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
 
         val mpm = getSystemService(MediaProjectionManager::class.java)
         val mp = mpm.getMediaProjection(code, data)
@@ -88,7 +88,7 @@ class EffectService : Service() {
     /** 상단바 패널 버튼 처리 */
     private fun handleControl(intent: Intent) {
         val i = intent.getIntExtra(FxNotification.EXTRA_IDX, 0)
-        val p = fxParams
+        val p = params
         val step = FxNotification.STEP
         paramsFlow.value = when (intent.action) {
             FxNotification.ACTION_TOGGLE -> p.toggled(i)
@@ -176,7 +176,7 @@ class EffectService : Service() {
                     val n = rec.read(inBuf, 0, inBuf.size)
                     if (n <= 0) continue
                     for (i in 0 until n) fBuf[i] = inBuf[i] / 32768f
-                    dsp.process(fBuf, n / 2, fxParams)
+                    dsp.process(fBuf, n / 2, params)
                     track.write(fBuf, 0, n, AudioTrack.WRITE_BLOCKING)
                 }
             } catch (e: Exception) {
