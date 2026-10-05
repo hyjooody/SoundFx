@@ -56,6 +56,7 @@ class EffectService : Service() {
     private var maxM = 15
     private var lastMusicIdx = -1
     private var volReceiverOn = false
+    @Volatile private var trackA11y = false   // 지금 트랙이 접근성 통로인지 (이어폰일 때만 접근성, 스피커는 알람)
     private val savedA11y = HashMap<String, Int>()   // 기기별 원래 접근성 음량 (끌 때 되돌리기용)
     private var receiverOn = false
     private var savedAlarm = -1
@@ -69,7 +70,8 @@ class EffectService : Service() {
 
     @Volatile private var rebuildTrack = false     // 출력 기기가 바뀌면 오디오 트랙을 새로 만들기
     @Volatile private var toHeadset = false        // 지금 이어폰으로 내보내는 중인지
-    @Volatile private var pausedByUnplug = false   // 이어폰 빠져서 일시정지된 상태
+    @Volatile private var pausedByUnplug = false
+    @Volatile private var routedInfo = "-"   // 트랙이 실제로 나가고 있는 기기 (확인용)   // 이어폰 빠져서 일시정지된 상태
     private val mainHandler = Handler(Looper.getMainLooper())
 
     /** 이어폰/블루투스가 연결되거나 빠질 때 */
@@ -140,7 +142,7 @@ class EffectService : Service() {
      */
     private fun applyRoute(t: AudioTrack) {
         if (!hideMode) { toHeadset = false; return }
-        if (a11yMode) { toHeadset = findHeadset() != null; return }
+        if (trackA11y) { toHeadset = true; return }   // 접근성 통로는 시스템이 음악처럼 알아서 연결
         val headset = findHeadset()
         toHeadset = headset != null
         val target = headset ?: getSystemService(AudioManager::class.java)
@@ -182,18 +184,35 @@ class EffectService : Service() {
         val am = getSystemService(AudioManager::class.java)
         val gainPct = when {
             !hideMode -> (fxParams.master * 100).roundToInt()
-            a11yMode || toHeadset -> (volCurve(fxParams.master) * 100).roundToInt()
+            trackA11y || toHeadset -> (volCurve(fxParams.master) * 100).roundToInt()
             else -> 100
         }
         status.value = buildString {
             append("모드: ").append(if (a11yMode) "이어폰 출력 모드(접근성)" else if (hideMode) "알람 채널" else "겹쳐 듣기").append("\n")
             append("출력: ").append(if (hs != null) "이어폰 (${hs.productName}, 종류 ${hs.type})" else "스피커")
-            append("\n트랙 출력: ").append(if (toHeadset) "이어폰" else "스피커")
+            append("\n트랙: ").append(if (trackA11y) "접근성" else if (hideMode) "알람" else "미디어")
+            append(" → ").append(if (toHeadset) "이어폰" else "스피커")
             append(" · 원본 음소거: ").append(if (am.isStreamMute(AudioManager.STREAM_MUSIC)) "O" else "X")
             append("\n미디어 ").append(am.getStreamVolume(AudioManager.STREAM_MUSIC))
             append(" · 알람 ").append(am.getStreamVolume(AudioManager.STREAM_ALARM)).append("/").append(maxA)
+            append(" · 접근성 ").append(am.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY))
             append(" · 앱 증폭 ").append(gainPct).append("%")
             if (pausedByUnplug) append(" · 일시정지됨")
+            append("\n실제 출력: ").append(routedInfo)
+            append(" · 접근성 음량 ").append(am.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY))
+            append("/").append(am.getStreamMaxVolume(AudioManager.STREAM_ACCESSIBILITY))
+            append(if (am.isStreamMute(AudioManager.STREAM_ACCESSIBILITY)) "(음소거)" else "")
+            append("\n알람 음소거: ").append(if (am.isStreamMute(AudioManager.STREAM_ALARM)) "O" else "X")
+            append(" · 방해금지: ").append(
+                when (getSystemService(NotificationManager::class.java).currentInterruptionFilter) {
+                    NotificationManager.INTERRUPTION_FILTER_ALL -> "꺼짐"
+                    NotificationManager.INTERRUPTION_FILTER_PRIORITY -> "켜짐(중요만)"
+                    NotificationManager.INTERRUPTION_FILTER_ALARMS -> "켜짐(알람만)"
+                    NotificationManager.INTERRUPTION_FILTER_NONE -> "켜짐(완전 무음)"
+                    else -> "?"
+                }
+            )
+            append(" · 바 ").append((fxParams.master * 100).roundToInt()).append("%")
         }
     }
 
@@ -295,15 +314,13 @@ class EffectService : Service() {
             // 미디어는 음량을 건드리지 않고 '음소거'만 → 어느 기기든 원본이 안 들리고, 끄면 원래 음량 그대로
             am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
             musicMuted = true
-            if (a11yMode) {
-                // 접근성 채널은 최대로 열어두고, 실제 크기는 음량 바로 앱에서 조절
-                boostA11y()
-            } else {
-                savedAlarm = am.getStreamVolume(AudioManager.STREAM_ALARM)
-                minA = am.getStreamMinVolume(AudioManager.STREAM_ALARM)
-                maxA = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-                lastAlarm = -1
-            }
+            // 스피커로 나갈 땐 알람 통로를 쓰니까 알람 음량은 항상 관리 (끄면 복구)
+            savedAlarm = am.getStreamVolume(AudioManager.STREAM_ALARM)
+            minA = am.getStreamMinVolume(AudioManager.STREAM_ALARM)
+            maxA = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+            lastAlarm = -1
+            // 이어폰으로 나갈 땐 접근성 통로 → 최대로 열어두고 크기는 음량 바로 앱에서 조절
+            if (a11yMode) boostA11y()
             // 음량 바를 원래 미디어 음량 위치로 → 켜기 전과 같은 크기로 시작 (0이었으면 무음)
             paramsFlow.value = fxParams.copy(master = ratio)
             applyAlarm(fxParams)
@@ -393,11 +410,15 @@ class EffectService : Service() {
     }
 
     private fun buildTrack(hide: Boolean): AudioTrack {
+        // 이어폰: 접근성 통로 (알람은 갤럭시가 스피커로도 내보내서 안 됨)
+        // 스피커: 알람 통로 (스피커만 쓸 땐 문제없고 확실하게 소리 남)
+        val useA11y = hide && a11yMode && findHeadset() != null
+        trackA11y = useA11y
         val attrs = AudioAttributes.Builder()
             .setUsage(
                 when {
                     !hide -> AudioAttributes.USAGE_MEDIA
-                    a11yMode -> AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY
+                    useA11y -> AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY
                     else -> AudioAttributes.USAGE_ALARM
                 }
             )
@@ -468,7 +489,11 @@ class EffectService : Service() {
                     // 약 0.5초마다 '실제로' 어디로 나가는지 확인
                     // 유선(USB) 이어폰은 꽂고 나서 준비되는 데 몇 초 걸려서, 그 전에 연결하면 스피커로 새어 나감
                     // → 원하는 기기와 실제 출력이 다르면 다시 연결
-                    if (hideMode && !a11yMode && ++routeTick % 25 == 0) {
+                    routeTick++
+                    if (routeTick % 25 == 0) {
+                        routedInfo = out.routedDevice?.let { "${it.productName}(${it.type})" } ?: "없음"
+                    }
+                    if (hideMode && !trackA11y && routeTick % 25 == 0) {
                         val want = findHeadset()
                         val routed = out.routedDevice
                         val wrong = if (want != null) routed == null || routed.id != want.id
@@ -495,7 +520,7 @@ class EffectService : Service() {
                         // 이어폰: 폰 알람 음량이 이어폰엔 안 먹혀서 → 음량 바 값으로 앱에서 직접 조절
                         val gain = when {
                             !hideMode -> pp.master
-                            a11yMode || toHeadset -> volCurve(pp.master)
+                            trackA11y || toHeadset -> volCurve(pp.master)
                             else -> 1f
                         }
                         dsp.process(fBuf, n / 2, pp.copy(master = gain))
