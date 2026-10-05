@@ -47,7 +47,7 @@ class EffectService : Service() {
             ACTION_STOP -> { stopSelf(); return START_NOT_STICKY }
             FxNotification.ACTION_TOGGLE, FxNotification.ACTION_UP, FxNotification.ACTION_DOWN,
             FxNotification.ACTION_NOISE, FxNotification.ACTION_MASTER_UP, FxNotification.ACTION_MASTER_DOWN -> {
-                if (projection == null) stopSelf() else handleControl(intent)
+                if (projection == null) stopSelf() else handleControl(intent!!)
                 return START_NOT_STICKY
             }
         }
@@ -56,7 +56,7 @@ class EffectService : Service() {
         val code = intent?.getIntExtra(EXTRA_CODE, 0) ?: 0
         val data: Intent? = if (Build.VERSION.SDK_INT >= 33)
             intent?.getParcelableExtra(EXTRA_DATA, Intent::class.java)
-        else @Suppress("DEPRECATION") intent?.getParcelableExtra(EXTRA_DATA)
+        else @Suppress("DEPRECATION") intent?.getParcelableExtra<Intent>(EXTRA_DATA)
         if (data == null) { stopSelf(); return START_NOT_STICKY }
         val hide = intent!!.getBooleanExtra(EXTRA_HIDE, true)
 
