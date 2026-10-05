@@ -80,11 +80,11 @@ fun PanelScreen(onClose: () -> Unit, onStop: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
                     Text("🔊", fontSize = 20.sp)
                     Spacer(Modifier.width(8.dp))
-                    Text("전체 음량", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                    Text("${(p.master * 100).roundToInt()}%", color = PanelSub, fontSize = 13.sp)
+                    Text("음량", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Text("${(p.master.coerceIn(0f, 1f) * 100).roundToInt()}%", color = PanelSub, fontSize = 13.sp)
                 }
-                Slider(value = p.master, onValueChange = { set(p.copy(master = it)) },
-                    valueRange = 0f..1.5f, modifier = Modifier.fillMaxWidth())
+                Slider(value = p.master.coerceIn(0f, 1f), onValueChange = { set(p.copy(master = it)) },
+                    valueRange = 0f..1f, modifier = Modifier.fillMaxWidth())
                 HorizontalDivider(color = Color(0x22FFFFFF))
 
                 Fx.entries.forEach { fx -> PanelRow(fx, p, set) }

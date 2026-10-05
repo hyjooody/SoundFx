@@ -40,6 +40,10 @@ class EffectService : Service() {
     private var savedAlarm = -1
     private val scope = MainScope()
     private var hideMode = false
+    private var minA = 0
+    private var maxA = 15
+    private var lastAlarm = -1
+    @Volatile private var softMute = false
     @Volatile private var outTrack: AudioTrack? = null
 
     /** 이어폰/블루투스가 연결되거나 빠질 때마다 출력 기기를 다시 지정 */
@@ -78,6 +82,13 @@ class EffectService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> { stopSelf(); return START_NOT_STICKY }
+            // 상단바 알림을 밀어서 지우면 바로 다시 띄움
+            FxNotification.ACTION_REPOST -> {
+                if (projection != null) getSystemService(NotificationManager::class.java)
+                    .notify(FxNotification.ID, FxNotification.build(this, fxParams))
+                else stopSelf()
+                return START_NOT_STICKY
+            }
             FxNotification.ACTION_TOGGLE, FxNotification.ACTION_SET,
             FxNotification.ACTION_NOISE, FxNotification.ACTION_MASTER_SET -> {
                 if (projection == null) stopSelf() else handleControl(intent!!)
@@ -112,6 +123,9 @@ class EffectService : Service() {
 
         // 설정이 바뀔 때마다(앱 화면이든 상단바든) 패널을 다시 그림 — 0.15초 디바운스
         val nm = getSystemService(NotificationManager::class.java)
+        // 음량 바 ↔ 폰 알람 음량 연동 (바를 움직이면 알람 음량이, 음량 버튼을 누르면 바가 따라 움직임)
+        scope.launch { paramsFlow.collect { applyAlarm(it) } }
+        scope.launch { while (true) { delay(300); pollAlarm() } }
         scope.launch {
             paramsFlow.collectLatest {
                 delay(150)
@@ -142,11 +156,41 @@ class EffectService : Service() {
         try {
             savedMusic = am.getStreamVolume(AudioManager.STREAM_MUSIC)
             savedAlarm = am.getStreamVolume(AudioManager.STREAM_ALARM)
+            minA = am.getStreamMinVolume(AudioManager.STREAM_ALARM)
+            maxA = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
             val ratio = savedMusic.toFloat() / am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-            val alarmVol = max(1, (ratio * am.getStreamMaxVolume(AudioManager.STREAM_ALARM)).roundToInt())
-            am.setStreamVolume(AudioManager.STREAM_ALARM, alarmVol, 0)
             am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
+            lastAlarm = -1
+            // 음량 바를 원래 미디어 음량 위치로 맞춤 → 켜기 전과 같은 크기로 시작 (0이었으면 무음)
+            paramsFlow.value = fxParams.copy(master = ratio)
+            applyAlarm(fxParams)
         } catch (_: Exception) { }
+    }
+
+    /** 음량 바 값 → 폰 알람 음량 */
+    private fun applyAlarm(p: Params) {
+        if (!hideMode || savedAlarm < 0) return
+        val target = (p.master.coerceIn(0f, 1f) * maxA).roundToInt()
+        // 갤럭시는 알람을 0까지 못 내리는 경우가 있어서, 그 아래는 앱에서 직접 무음 처리
+        softMute = target <= 0 || target < minA
+        val actual = target.coerceIn(minA, maxA)
+        if (actual != lastAlarm) {
+            val am = getSystemService(AudioManager::class.java)
+            try {
+                am.setStreamVolume(AudioManager.STREAM_ALARM, actual, 0)
+                lastAlarm = am.getStreamVolume(AudioManager.STREAM_ALARM)
+            } catch (_: Exception) { }
+        }
+    }
+
+    /** 음량 버튼으로 알람 음량이 바뀌면 음량 바도 따라 움직이게 */
+    private fun pollAlarm() {
+        if (!hideMode || lastAlarm < 0) return
+        val v = getSystemService(AudioManager::class.java).getStreamVolume(AudioManager.STREAM_ALARM)
+        if (v != lastAlarm) {
+            lastAlarm = v
+            paramsFlow.value = fxParams.copy(master = v.toFloat() / maxA)
+        }
     }
 
     private fun restoreVolumes() {
@@ -156,6 +200,7 @@ class EffectService : Service() {
             if (savedAlarm >= 0) am.setStreamVolume(AudioManager.STREAM_ALARM, savedAlarm, 0)
         } catch (_: Exception) { }
         savedMusic = -1; savedAlarm = -1
+        lastAlarm = -1; softMute = false
     }
 
     @SuppressLint("MissingPermission")
@@ -212,7 +257,10 @@ class EffectService : Service() {
                     val n = rec.read(inBuf, 0, inBuf.size)
                     if (n <= 0) continue
                     for (i in 0 until n) fBuf[i] = inBuf[i] / 32768f
-                    dsp.process(fBuf, n / 2, fxParams)
+                    // 원본 숨기기 모드에선 크기를 폰 알람 음량이 담당 → 앱 안 증폭은 1배 고정
+                    val pp = fxParams
+                    dsp.process(fBuf, n / 2, if (hideMode) pp.copy(master = 1f) else pp)
+                    if (softMute) java.util.Arrays.fill(fBuf, 0, n, 0f)
                     track.write(fBuf, 0, n, AudioTrack.WRITE_BLOCKING)
                 }
             } catch (e: Exception) {

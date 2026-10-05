@@ -17,6 +17,7 @@ object FxNotification {
     const val ACTION_SET = "com.yeji.soundfx.SET"
     const val ACTION_NOISE = "com.yeji.soundfx.NOISE"
     const val ACTION_MASTER_SET = "com.yeji.soundfx.MASTER_SET"
+    const val ACTION_REPOST = "com.yeji.soundfx.REPOST"
     const val EXTRA_IDX = "idx"
     const val EXTRA_LEVEL = "level"
     const val SEGS = 10
@@ -62,8 +63,10 @@ object FxNotification {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
+            .setDeleteIntent(servicePi(ctx, ACTION_REPOST, 8))
             .addAction(Notification.Action.Builder(null as Icon?, "🎛 슬라이더 패널", panelPi).build())
             .addAction(Notification.Action.Builder(null as Icon?, "■ 이펙터 끄기", stopPi).build())
             .build()
+            .apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }
     }
 }

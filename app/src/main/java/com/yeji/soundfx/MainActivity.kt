@@ -124,12 +124,35 @@ fun FxScreen(onStart: (Boolean) -> Unit, onStop: () -> Unit) {
 
         Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2A))) {
             Column(Modifier.padding(16.dp)) {
-                Text("🔊 전체 음량  ${(p.master * 100).roundToInt()}%", color = Color.White, fontWeight = FontWeight.Bold)
-                Slider(value = p.master, onValueChange = { set(p.copy(master = it)) }, valueRange = 0f..1.5f)
+                Text("🔊 음량  ${(p.master.coerceIn(0f, 1f) * 100).roundToInt()}%", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("작동 중엔 폰의 알람 음량을 직접 조절해요. 폰 옆 음량 버튼과 같이 움직이고, 끄면 원래 음량으로 돌아가요.",
+                    color = TextSub, fontSize = 12.sp)
+                Slider(value = p.master.coerceIn(0f, 1f), onValueChange = { set(p.copy(master = it)) }, valueRange = 0f..1f)
             }
         }
 
         Fx.entries.forEach { fx -> FxCard(fx, p, set) }
+
+        // 전체 초기화: 모든 이펙트 끄기 + 강도 50% + 빗소리 (음량은 유지)
+        var askReset by remember { mutableStateOf(false) }
+        OutlinedButton(
+            onClick = { askReset = true },
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFE57373))
+        ) { Text("↺ 전체 이펙터 초기화", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+        if (askReset) {
+            AlertDialog(
+                onDismissRequest = { askReset = false },
+                title = { Text("전체 초기화") },
+                text = { Text("모든 이펙트를 끄고 강도를 50%로 되돌릴까요? (음량은 그대로예요)") },
+                confirmButton = {
+                    TextButton(onClick = { set(Params(master = p.master)); askReset = false }) {
+                        Text("초기화", color = Color(0xFFE57373))
+                    }
+                },
+                dismissButton = { TextButton(onClick = { askReset = false }) { Text("취소") } }
+            )
+        }
         Spacer(Modifier.height(24.dp))
     }
 }
