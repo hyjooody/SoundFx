@@ -8,6 +8,7 @@ import android.media.*
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.*
+import android.view.KeyEvent
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -31,6 +32,13 @@ class EffectService : Service() {
         const val ACTION_STOP = "com.yeji.soundfx.STOP"
         private const val SR = 48000
         private const val FRAMES = 1024
+        private val HEADSET_TYPES = intArrayOf(
+            AudioDeviceInfo.TYPE_WIRED_HEADSET,
+            AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+            AudioDeviceInfo.TYPE_USB_HEADSET,
+            AudioDeviceInfo.TYPE_BLE_HEADSET,
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
+        )
     }
 
     private var projection: MediaProjection? = null
@@ -45,35 +53,55 @@ class EffectService : Service() {
     private var lastAlarm = -1
     private var ignoreUntil = 0L   // 앱이 직접 음량을 바꾼 직후엔 '음량 버튼 눌림'으로 착각하지 않게
     @Volatile private var softMute = false
-    @Volatile private var outTrack: AudioTrack? = null
 
-    /** 이어폰/블루투스가 연결되거나 빠질 때마다 출력 기기를 다시 지정 */
+    @Volatile private var rebuildTrack = false     // 출력 기기가 바뀌면 오디오 트랙을 새로 만들기
+    @Volatile private var toHeadset = false        // 지금 이어폰으로 내보내는 중인지
+    @Volatile private var pausedByUnplug = false   // 이어폰 빠져서 일시정지된 상태
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    /** 이어폰/블루투스가 연결되거나 빠질 때 */
     private val deviceCb = object : AudioDeviceCallback() {
-        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) { applyRoute() }
-        override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) { applyRoute() }
+        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) {
+            scheduleRebuild()
+        }
+        override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) {
+            if (removedDevices?.any { it.type in HEADSET_TYPES } == true) pauseMedia()
+            scheduleRebuild()
+        }
+    }
+
+    /** 블루투스는 연결 직후 바로 준비가 안 될 때가 있어서 두 번에 나눠 다시 연결 */
+    private fun scheduleRebuild() {
+        mainHandler.postDelayed({ rebuildTrack = true }, 500)
+        mainHandler.postDelayed({ rebuildTrack = true }, 2000)
+    }
+
+    /** 이어폰이 빠지면 재생 중인 음악 앱을 일시정지 */
+    private fun pauseMedia() {
+        if (projection == null) return
+        val am = getSystemService(AudioManager::class.java)
+        try {
+            am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE))
+            am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE))
+        } catch (_: Exception) { }
+        // 생활 소음·LP 잡음 같은 이펙트 소리도 음악이 다시 나올 때까지 멈춤
+        pausedByUnplug = true
     }
 
     /**
      * 알람 채널은 기본적으로 '스피커 + 이어폰' 동시 재생이라서,
      * 이어폰이 있으면 그 기기로만 나가도록 직접 지정한다.
      */
-    private fun applyRoute() {
-        val t = outTrack ?: return
-        if (!hideMode) return
+    private fun applyRoute(t: AudioTrack) {
+        if (!hideMode) { toHeadset = false; return }
         val am = getSystemService(AudioManager::class.java)
         val outs = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-        val priority = intArrayOf(
-            AudioDeviceInfo.TYPE_WIRED_HEADSET,
-            AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
-            AudioDeviceInfo.TYPE_USB_HEADSET,
-            AudioDeviceInfo.TYPE_BLE_HEADSET,
-            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
-        )
         var target: AudioDeviceInfo? = null
-        for (type in priority) {
+        for (type in HEADSET_TYPES) {
             target = outs.firstOrNull { it.type == type }
             if (target != null) break
         }
+        toHeadset = target != null
         if (target == null) target = outs.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
         try { t.setPreferredDevice(target) } catch (_: Exception) { }
     }
@@ -205,6 +233,26 @@ class EffectService : Service() {
         lastAlarm = -1; softMute = false
     }
 
+    private fun buildTrack(hide: Boolean): AudioTrack {
+        val attrs = AudioAttributes.Builder()
+            .setUsage(if (hide) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build()
+        val outFmt = AudioFormat.Builder()
+            .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
+            .setSampleRate(SR)
+            .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+            .build()
+        val minTrack = AudioTrack.getMinBufferSize(SR, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_FLOAT)
+        return AudioTrack.Builder()
+            .setAudioAttributes(attrs)
+            .setAudioFormat(outFmt)
+            .setBufferSizeInBytes(max(minTrack, FRAMES * 8) * 2)
+            .setTransferMode(AudioTrack.MODE_STREAM)
+            .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
+            .build()
+    }
+
     @SuppressLint("MissingPermission")
     private fun startAudio(mp: MediaProjection, hide: Boolean) {
         loop = true
@@ -224,51 +272,62 @@ class EffectService : Service() {
                     .setChannelMask(AudioFormat.CHANNEL_IN_STEREO)
                     .build()
                 val minRec = AudioRecord.getMinBufferSize(SR, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT)
-                rec = AudioRecord.Builder()
+                val r = AudioRecord.Builder()
                     .setAudioFormat(inFmt)
                     .setBufferSizeInBytes(max(minRec, FRAMES * 4) * 2)
                     .setAudioPlaybackCaptureConfig(cfg)
                     .build()
-
-                val attrs = AudioAttributes.Builder()
-                    .setUsage(if (hide) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-                val outFmt = AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
-                    .setSampleRate(SR)
-                    .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
-                    .build()
-                val minTrack = AudioTrack.getMinBufferSize(SR, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_FLOAT)
-                track = AudioTrack.Builder()
-                    .setAudioAttributes(attrs)
-                    .setAudioFormat(outFmt)
-                    .setBufferSizeInBytes(max(minTrack, FRAMES * 8) * 2)
-                    .setTransferMode(AudioTrack.MODE_STREAM)
-                    .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
-                    .build()
+                rec = r
 
                 val dsp = Dsp(SR)
                 val inBuf = ShortArray(FRAMES * 2)
                 val fBuf = FloatArray(FRAMES * 2)
-                outTrack = track
-                applyRoute()
-                rec.startRecording()
-                track.play()
+                r.startRecording()
+                rebuildTrack = true
                 while (loop) {
-                    val n = rec.read(inBuf, 0, inBuf.size)
+                    // 출력 기기가 바뀌었으면 트랙을 새로 만들어서 새 기기로만 나가게
+                    if (rebuildTrack) {
+                        rebuildTrack = false
+                        track?.let {
+                            try { it.pause(); it.flush(); it.stop() } catch (_: Exception) { }
+                            it.release()
+                        }
+                        val t = buildTrack(hide)
+                        applyRoute(t)
+                        t.play()
+                        track = t
+                    }
+                    val out = track ?: continue
+
+                    val n = r.read(inBuf, 0, inBuf.size)
                     if (n <= 0) continue
-                    for (i in 0 until n) fBuf[i] = inBuf[i] / 32768f
-                    // 원본 숨기기 모드에선 크기를 폰 알람 음량이 담당 → 앱 안 증폭은 1배 고정
-                    val pp = fxParams
-                    dsp.process(fBuf, n / 2, if (hideMode) pp.copy(master = 1f) else pp)
-                    if (softMute) java.util.Arrays.fill(fBuf, 0, n, 0f)
-                    track.write(fBuf, 0, n, AudioTrack.WRITE_BLOCKING)
+
+                    if (pausedByUnplug) {
+                        // 음악이 다시 재생되면(소리가 들어오면) 자동으로 해제
+                        var peak = 0
+                        for (i in 0 until n) { val v = kotlin.math.abs(inBuf[i].toInt()); if (v > peak) peak = v }
+                        if (peak > 200) pausedByUnplug = false
+                    }
+
+                    if (pausedByUnplug || softMute) {
+                        java.util.Arrays.fill(fBuf, 0, n, 0f)
+                    } else {
+                        for (i in 0 until n) fBuf[i] = inBuf[i] / 32768f
+                        val pp = fxParams
+                        // 스피커: 크기는 폰 알람 음량이 담당 → 앱 증폭 1배
+                        // 이어폰: 폰 알람 음량이 이어폰엔 안 먹혀서 → 음량 바 값으로 앱에서 직접 조절
+                        val gain = when {
+                            !hideMode -> pp.master
+                            toHeadset -> pp.master.coerceIn(0f, 1f).let { it * it }
+                            else -> 1f
+                        }
+                        dsp.process(fBuf, n / 2, pp.copy(master = gain))
+                    }
+                    out.write(fBuf, 0, n, AudioTrack.WRITE_BLOCKING)
                 }
             } catch (e: Exception) {
                 Handler(Looper.getMainLooper()).post { stopSelf() }
             } finally {
-                outTrack = null
                 try { rec?.stop() } catch (_: Exception) { }
                 rec?.release()
                 try { track?.stop() } catch (_: Exception) { }
@@ -279,6 +338,7 @@ class EffectService : Service() {
 
     override fun onDestroy() {
         scope.cancel()
+        mainHandler.removeCallbacksAndMessages(null)
         try { getSystemService(AudioManager::class.java).unregisterAudioDeviceCallback(deviceCb) } catch (_: Exception) { }
         loop = false
         try { worker?.join(800) } catch (_: Exception) { }
