@@ -2,7 +2,10 @@ package com.yeji.soundfx
 
 import android.annotation.SuppressLint
 import android.app.*
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.media.*
 import android.media.projection.MediaProjection
@@ -44,7 +47,8 @@ class EffectService : Service() {
     private var projection: MediaProjection? = null
     private var worker: Thread? = null
     @Volatile private var loop = false
-    private var savedMusic = -1
+    private var musicMuted = false
+    private var receiverOn = false
     private var savedAlarm = -1
     private val scope = MainScope()
     private var hideMode = false
@@ -72,8 +76,25 @@ class EffectService : Service() {
 
     /** 블루투스는 연결 직후 바로 준비가 안 될 때가 있어서 두 번에 나눠 다시 연결 */
     private fun scheduleRebuild() {
-        mainHandler.postDelayed({ rebuildTrack = true }, 500)
-        mainHandler.postDelayed({ rebuildTrack = true }, 2000)
+        remute()
+        mainHandler.postDelayed({ remute(); rebuildTrack = true }, 500)
+        mainHandler.postDelayed({ remute(); rebuildTrack = true }, 2000)
+    }
+
+    /** 기기가 바뀔 때 시스템이 음소거를 풀어버리는 경우가 있어서 다시 걸어 둠 */
+    private fun remute() {
+        if (!musicMuted) return
+        try {
+            getSystemService(AudioManager::class.java)
+                .adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
+        } catch (_: Exception) { }
+    }
+
+    /** 이어폰이 빠지기 직전에 시스템이 보내는 신호 → 바로 일시정지 */
+    private val noisyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == AudioManager.ACTION_AUDIO_BECOMING_NOISY) pauseMedia()
+        }
     }
 
     /** 이어폰이 빠지면 재생 중인 음악 앱을 일시정지 */
@@ -147,6 +168,10 @@ class EffectService : Service() {
         if (hide) hideOriginal()
         getSystemService(AudioManager::class.java)
             .registerAudioDeviceCallback(deviceCb, Handler(Looper.getMainLooper()))
+        val noisyFilter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+        if (Build.VERSION.SDK_INT >= 33) registerReceiver(noisyReceiver, noisyFilter, Context.RECEIVER_NOT_EXPORTED)
+        else registerReceiver(noisyReceiver, noisyFilter)
+        receiverOn = true
         startAudio(mp, hide)
         running.value = true
 
@@ -183,12 +208,15 @@ class EffectService : Service() {
     private fun hideOriginal() {
         val am = getSystemService(AudioManager::class.java)
         try {
-            savedMusic = am.getStreamVolume(AudioManager.STREAM_MUSIC)
+            val music = am.getStreamVolume(AudioManager.STREAM_MUSIC)
             savedAlarm = am.getStreamVolume(AudioManager.STREAM_ALARM)
             minA = am.getStreamMinVolume(AudioManager.STREAM_ALARM)
             maxA = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-            val ratio = savedMusic.toFloat() / am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-            am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
+            val ratio = music.toFloat() / am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            // 미디어 음량은 스피커·이어폰마다 따로 저장돼서, 0으로 내리면 다른 기기로 바뀔 때 원본이 새어 나옴
+            // → 음량은 그대로 두고 '음소거'만 걸어서 어느 기기든 원본이 안 들리게
+            am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
+            musicMuted = true
             lastAlarm = -1
             // 음량 바를 원래 미디어 음량 위치로 맞춤 → 켜기 전과 같은 크기로 시작 (0이었으면 무음)
             paramsFlow.value = fxParams.copy(master = ratio)
@@ -226,10 +254,10 @@ class EffectService : Service() {
     private fun restoreVolumes() {
         val am = getSystemService(AudioManager::class.java)
         try {
-            if (savedMusic >= 0) am.setStreamVolume(AudioManager.STREAM_MUSIC, savedMusic, 0)
+            if (musicMuted) am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
             if (savedAlarm >= 0) am.setStreamVolume(AudioManager.STREAM_ALARM, savedAlarm, 0)
         } catch (_: Exception) { }
-        savedMusic = -1; savedAlarm = -1
+        musicMuted = false; savedAlarm = -1
         lastAlarm = -1; softMute = false
     }
 
@@ -340,6 +368,7 @@ class EffectService : Service() {
         scope.cancel()
         mainHandler.removeCallbacksAndMessages(null)
         try { getSystemService(AudioManager::class.java).unregisterAudioDeviceCallback(deviceCb) } catch (_: Exception) { }
+        if (receiverOn) { try { unregisterReceiver(noisyReceiver) } catch (_: Exception) { }; receiverOn = false }
         loop = false
         try { worker?.join(800) } catch (_: Exception) { }
         worker = null
