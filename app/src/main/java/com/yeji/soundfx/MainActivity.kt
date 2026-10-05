@@ -7,6 +7,7 @@ import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -127,6 +129,28 @@ fun FxScreen(onStart: (Boolean) -> Unit, onStop: () -> Unit) {
                 }
                 Spacer(Modifier.width(8.dp))
                 Switch(checked = hide, onCheckedChange = { hide = it }, enabled = !running)
+            }
+        }
+
+        val a11yOn by FxA11yService.on.collectAsState()
+        val ctx = LocalContext.current
+        Card(colors = CardDefaults.cardColors(containerColor = if (a11yOn) Color(0xFF1E2A26) else Color(0xFF2A1E22))) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("🎧 이어폰 출력 모드  " + if (a11yOn) "켜짐 ✓" else "꺼짐",
+                    color = Color.White, fontWeight = FontWeight.Bold)
+                Text(
+                    if (a11yOn) "이펙트 소리가 일반 음악처럼 나가서, 이어폰을 꽂으면 이어폰으로만 나와요."
+                    else "켜면 이어폰을 꽂았을 때 폰 스피커에서도 소리가 나는 문제가 사라져요. " +
+                        "접근성 → 설치된 앱 → '소리 이펙터 (이어폰 출력 모드)'를 켜 주세요. " +
+                        "회색으로 안 눌리면: 설정 → 애플리케이션 → 소리 이펙터 → 오른쪽 위 ⋮ → '제한된 설정 허용' 후 다시 시도.",
+                    color = TextSub, fontSize = 12.sp, lineHeight = 17.sp
+                )
+                if (!a11yOn) {
+                    Button(onClick = {
+                        ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }) { Text("접근성 설정 열기") }
+                }
+                if (running) Text("※ 바꾼 경우 이펙터를 정지했다가 다시 시작해야 적용돼요.", color = TextSub, fontSize = 11.sp)
             }
         }
 

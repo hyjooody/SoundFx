@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="a11y_desc">소리 이펙터의 이펙트 소리를 일반 음악처럼 내보내기 위한 기능이에요. 이걸 켜면 이어폰을 꽂았을 때 이어폰으로만 소리가 나요. 화면 내용은 읽지 않아요.</string>
+</resources>

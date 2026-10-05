@@ -26,6 +26,18 @@
             android:excludeFromRecents="true"
             android:launchMode="singleTask" />
         <service
+            android:name=".FxA11yService"
+            android:exported="true"
+            android:label="소리 이펙터 (이어폰 출력 모드)"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/a11y_config" />
+        </service>
+        <service
             android:name=".EffectService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />

@@ -52,6 +52,11 @@ class EffectService : Service() {
     private var worker: Thread? = null
     @Volatile private var loop = false
     private var musicMuted = false
+    private var a11yMode = false     // 접근성 음량 채널로 내보내는 모드 (이어폰 문제 없는 방식)
+    private var maxM = 15
+    private var lastMusicIdx = -1
+    private var volReceiverOn = false
+    private val savedA11y = HashMap<String, Int>()   // 기기별 원래 접근성 음량 (끌 때 되돌리기용)
     private var receiverOn = false
     private var savedAlarm = -1
     private val scope = MainScope()
@@ -81,7 +86,7 @@ class EffectService : Service() {
     /** 블루투스는 연결 직후 바로 준비가 안 될 때가 있어서 두 번에 나눠 다시 연결 */
     private fun scheduleRebuild() {
         remute()
-        mainHandler.postDelayed({ remute(); rebuildTrack = true }, 500)
+        mainHandler.postDelayed({ remute(); boostA11y(); rebuildTrack = true }, 500)
         mainHandler.postDelayed({ remute(); rebuildTrack = true }, 2000)
         mainHandler.postDelayed({ remute(); rebuildTrack = true }, 4000)
     }
@@ -135,12 +140,20 @@ class EffectService : Service() {
      */
     private fun applyRoute(t: AudioTrack) {
         if (!hideMode) { toHeadset = false; return }
+        if (a11yMode) { toHeadset = findHeadset() != null; return }
         val headset = findHeadset()
         toHeadset = headset != null
         val target = headset ?: getSystemService(AudioManager::class.java)
             .getDevices(AudioManager.GET_DEVICES_OUTPUTS)
             .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
         try { t.setPreferredDevice(target) } catch (_: Exception) { }
+    }
+
+    /** 0~1 음량 바 → 실제 크기 (폰 음량 버튼처럼 데시벨 곡선) */
+    private fun volCurve(m: Float): Float {
+        val x = m.coerceIn(0f, 1f)
+        if (x <= 0.001f) return 0f
+        return Math.pow(10.0, -48.0 * (1.0 - x) / 20.0).toFloat()
     }
 
     private fun findHeadset(): AudioDeviceInfo? {
@@ -169,10 +182,11 @@ class EffectService : Service() {
         val am = getSystemService(AudioManager::class.java)
         val gainPct = when {
             !hideMode -> (fxParams.master * 100).roundToInt()
-            toHeadset -> (fxParams.master.coerceIn(0f, 1f).let { it * it } * 100).roundToInt()
+            a11yMode || toHeadset -> (volCurve(fxParams.master) * 100).roundToInt()
             else -> 100
         }
         status.value = buildString {
+            append("모드: ").append(if (a11yMode) "이어폰 출력 모드(접근성)" else if (hideMode) "알람 채널" else "겹쳐 듣기").append("\n")
             append("출력: ").append(if (hs != null) "이어폰 (${hs.productName}, 종류 ${hs.type})" else "스피커")
             append("\n트랙 출력: ").append(if (toHeadset) "이어폰" else "스피커")
             append(" · 원본 음소거: ").append(if (am.isStreamMute(AudioManager.STREAM_MUSIC)) "O" else "X")
@@ -221,7 +235,17 @@ class EffectService : Service() {
         projection = mp
 
         hideMode = hide
+        a11yMode = hide && FxA11yService.on.value
         if (hide) hideOriginal()
+        if (a11yMode) {
+            val vf = IntentFilter().apply {
+                addAction("android.media.VOLUME_CHANGED_ACTION")
+                addAction("android.media.STREAM_MUTE_CHANGED_ACTION")
+            }
+            if (Build.VERSION.SDK_INT >= 33) registerReceiver(volReceiver, vf, Context.RECEIVER_NOT_EXPORTED)
+            else registerReceiver(volReceiver, vf)
+            volReceiverOn = true
+        }
         getSystemService(AudioManager::class.java)
             .registerAudioDeviceCallback(deviceCb, Handler(Looper.getMainLooper()))
         val noisyFilter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
@@ -235,7 +259,7 @@ class EffectService : Service() {
         val nm = getSystemService(NotificationManager::class.java)
         // 음량 바 ↔ 폰 알람 음량 연동 (바를 움직이면 알람 음량이, 음량 버튼을 누르면 바가 따라 움직임)
         scope.launch { paramsFlow.collect { applyAlarm(it) } }
-        scope.launch { while (true) { delay(300); pollAlarm(); checkDevices() } }
+        scope.launch { while (true) { delay(300); pollAlarm(); checkMusicVolume(); checkDevices() } }
         scope.launch {
             paramsFlow.collectLatest {
                 delay(150)
@@ -265,19 +289,61 @@ class EffectService : Service() {
         val am = getSystemService(AudioManager::class.java)
         try {
             val music = am.getStreamVolume(AudioManager.STREAM_MUSIC)
-            savedAlarm = am.getStreamVolume(AudioManager.STREAM_ALARM)
-            minA = am.getStreamMinVolume(AudioManager.STREAM_ALARM)
-            maxA = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-            val ratio = music.toFloat() / am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-            // 미디어 음량은 스피커·이어폰마다 따로 저장돼서, 0으로 내리면 다른 기기로 바뀔 때 원본이 새어 나옴
-            // → 음량은 그대로 두고 '음소거'만 걸어서 어느 기기든 원본이 안 들리게
+            maxM = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            lastMusicIdx = music
+            val ratio = music.toFloat() / maxM
+            // 미디어는 음량을 건드리지 않고 '음소거'만 → 어느 기기든 원본이 안 들리고, 끄면 원래 음량 그대로
             am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
             musicMuted = true
-            lastAlarm = -1
-            // 음량 바를 원래 미디어 음량 위치로 맞춤 → 켜기 전과 같은 크기로 시작 (0이었으면 무음)
+            if (a11yMode) {
+                // 접근성 채널은 최대로 열어두고, 실제 크기는 음량 바로 앱에서 조절
+                boostA11y()
+            } else {
+                savedAlarm = am.getStreamVolume(AudioManager.STREAM_ALARM)
+                minA = am.getStreamMinVolume(AudioManager.STREAM_ALARM)
+                maxA = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+                lastAlarm = -1
+            }
+            // 음량 바를 원래 미디어 음량 위치로 → 켜기 전과 같은 크기로 시작 (0이었으면 무음)
             paramsFlow.value = fxParams.copy(master = ratio)
             applyAlarm(fxParams)
         } catch (_: Exception) { }
+    }
+
+    private fun boostA11y() {
+        if (!a11yMode) return
+        val am = getSystemService(AudioManager::class.java)
+        try {
+            // 이 기기의 원래 값을 처음 한 번만 기억 (예전에 못 되돌린 값이 남아 있으면 그게 진짜 원래 값)
+            val key = VolumeRestore.key(am)
+            if (!savedA11y.containsKey(key)) {
+                savedA11y[key] = VolumeRestore.takePending(this, key)
+                    ?: am.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY)
+            }
+            am.setStreamVolume(AudioManager.STREAM_ACCESSIBILITY, am.getStreamMaxVolume(AudioManager.STREAM_ACCESSIBILITY), 0)
+        } catch (_: Exception) { }
+    }
+
+    /**
+     * 접근성 모드에서 음량 버튼을 누르면 미디어 음량이 바뀌면서 음소거가 풀림
+     * → 바뀐 미디어 음량을 음량 바에 반영하고 바로 다시 음소거
+     */
+    private fun checkMusicVolume() {
+        if (!a11yMode || !musicMuted) return
+        val am = getSystemService(AudioManager::class.java)
+        try {
+            val v = am.getStreamVolume(AudioManager.STREAM_MUSIC)
+            val muted = am.isStreamMute(AudioManager.STREAM_MUSIC)
+            if (v != lastMusicIdx) {
+                lastMusicIdx = v
+                paramsFlow.value = fxParams.copy(master = v.toFloat() / maxM)
+            }
+            if (!muted) am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
+        } catch (_: Exception) { }
+    }
+
+    private val volReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) { checkMusicVolume() }
     }
 
     /** 음량 바 값 → 폰 알람 음량 */
@@ -312,6 +378,15 @@ class EffectService : Service() {
         try {
             if (musicMuted) am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
             if (savedAlarm >= 0) am.setStreamVolume(AudioManager.STREAM_ALARM, savedAlarm, 0)
+            // 접근성 음량: 지금 연결된 기기는 바로 되돌리고, 나머지는 다시 연결될 때 되돌리도록 기억
+            if (savedA11y.isNotEmpty()) {
+                val cur = VolumeRestore.key(am)
+                for ((k, v) in savedA11y) {
+                    if (k == cur) am.setStreamVolume(AudioManager.STREAM_ACCESSIBILITY, v, 0)
+                    else VolumeRestore.savePending(this, k, v)
+                }
+                savedA11y.clear()
+            }
         } catch (_: Exception) { }
         musicMuted = false; savedAlarm = -1
         lastAlarm = -1; softMute = false
@@ -319,7 +394,13 @@ class EffectService : Service() {
 
     private fun buildTrack(hide: Boolean): AudioTrack {
         val attrs = AudioAttributes.Builder()
-            .setUsage(if (hide) AudioAttributes.USAGE_ALARM else AudioAttributes.USAGE_MEDIA)
+            .setUsage(
+                when {
+                    !hide -> AudioAttributes.USAGE_MEDIA
+                    a11yMode -> AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY
+                    else -> AudioAttributes.USAGE_ALARM
+                }
+            )
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             .build()
         val outFmt = AudioFormat.Builder()
@@ -387,7 +468,7 @@ class EffectService : Service() {
                     // 약 0.5초마다 '실제로' 어디로 나가는지 확인
                     // 유선(USB) 이어폰은 꽂고 나서 준비되는 데 몇 초 걸려서, 그 전에 연결하면 스피커로 새어 나감
                     // → 원하는 기기와 실제 출력이 다르면 다시 연결
-                    if (hideMode && ++routeTick % 25 == 0) {
+                    if (hideMode && !a11yMode && ++routeTick % 25 == 0) {
                         val want = findHeadset()
                         val routed = out.routedDevice
                         val wrong = if (want != null) routed == null || routed.id != want.id
@@ -414,7 +495,7 @@ class EffectService : Service() {
                         // 이어폰: 폰 알람 음량이 이어폰엔 안 먹혀서 → 음량 바 값으로 앱에서 직접 조절
                         val gain = when {
                             !hideMode -> pp.master
-                            toHeadset -> pp.master.coerceIn(0f, 1f).let { it * it }
+                            a11yMode || toHeadset -> volCurve(pp.master)
                             else -> 1f
                         }
                         dsp.process(fBuf, n / 2, pp.copy(master = gain))
@@ -437,6 +518,7 @@ class EffectService : Service() {
         mainHandler.removeCallbacksAndMessages(null)
         try { getSystemService(AudioManager::class.java).unregisterAudioDeviceCallback(deviceCb) } catch (_: Exception) { }
         if (receiverOn) { try { unregisterReceiver(noisyReceiver) } catch (_: Exception) { }; receiverOn = false }
+        if (volReceiverOn) { try { unregisterReceiver(volReceiver) } catch (_: Exception) { }; volReceiverOn = false }
         loop = false
         try { worker?.join(800) } catch (_: Exception) { }
         worker = null
