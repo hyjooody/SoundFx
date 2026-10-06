@@ -159,7 +159,7 @@ fun FxScreen(onStart: (Boolean) -> Unit, onStop: () -> Unit) {
             Column(Modifier.padding(16.dp)) {
                 Text("🔊 음량  ${(p.master.coerceIn(0f, 1f) * 100).roundToInt()}%", color = Color.White, fontWeight = FontWeight.Bold)
                 Text("작동 중엔 이 음량 바로만 조절하세요. 폰 옆 음량 버튼은 정확하지 않아서 쓰지 않는 게 좋아요. " +
-                    "상단바 알림의 🔊 버튼을 누르면 음량 바만 바로 열려요. 끄면 원래 음량으로 돌아가요.",
+                    "상단바의 '🔊 이펙터 음량' 카드에서도 바를 바로 끌어서 조절할 수 있어요. 끄면 원래 음량으로 돌아가요.",
                     color = TextSub, fontSize = 12.sp, lineHeight = 17.sp)
                 Slider(value = p.master.coerceIn(0f, 1f), onValueChange = { set(p.copy(master = it)) }, valueRange = 0f..1f)
             }

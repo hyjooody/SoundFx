@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Icon
+import android.view.View
 import android.widget.RemoteViews
 
 /** 상단바 알림: 이펙트 켜고 끄기 + 슬라이더 패널 열기 */
@@ -63,7 +64,7 @@ object FxNotification {
             small.setOnClickPendingIntent(CHIP[i], servicePi(ctx, ACTION_TOGGLE, 2, i))
         }
         small.setOnClickPendingIntent(R.id.chip_panel, panelPi)
-        small.setOnClickPendingIntent(R.id.chip_vol, volPi)
+        small.setViewVisibility(R.id.chip_vol, View.GONE)
         small.setOnClickPendingIntent(R.id.chip_stop, stopPi)
 
         return Notification.Builder(ctx, CH)
@@ -76,8 +77,7 @@ object FxNotification {
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setDeleteIntent(servicePi(ctx, ACTION_REPOST, 8))
-            .addAction(Notification.Action.Builder(null as Icon?, "🎛 패널", panelPi).build())
-            .addAction(Notification.Action.Builder(null as Icon?, "🔊 음량", volPi).build())
+            .addAction(Notification.Action.Builder(null as Icon?, "🎛 슬라이더 패널", panelPi).build())
             .addAction(Notification.Action.Builder(null as Icon?, "■ 이펙터 끄기", stopPi).build())
             .build()
             .apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }

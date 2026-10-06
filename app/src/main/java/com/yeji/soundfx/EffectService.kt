@@ -64,6 +64,7 @@ class EffectService : Service() {
     private var receiverOn = false
     private var savedAlarm = -1
     private val scope = MainScope()
+    private var volCtl: VolumeMediaControl? = null   // 상단바 음악 카드 모양 음량 바
     private var hideMode = false
     private var minA = 0
     private var maxA = 15
@@ -229,8 +230,11 @@ class EffectService : Service() {
             ACTION_STOP -> { stopSelf(); return START_NOT_STICKY }
             // 상단바 알림을 밀어서 지우면 바로 다시 띄움
             FxNotification.ACTION_REPOST -> {
-                if (projection != null) getSystemService(NotificationManager::class.java)
-                    .notify(FxNotification.ID, FxNotification.build(this, fxParams))
+                if (projection != null) {
+                    getSystemService(NotificationManager::class.java)
+                        .notify(FxNotification.ID, FxNotification.build(this, fxParams))
+                    volCtl?.update(fxParams.master, force = true)
+                }
                 else stopSelf()
                 return START_NOT_STICKY
             }
@@ -282,6 +286,15 @@ class EffectService : Service() {
 
         // 설정이 바뀔 때마다(앱 화면이든 상단바든) 패널을 다시 그림 — 0.15초 디바운스
         val nm = getSystemService(NotificationManager::class.java)
+        // 상단바에서 바로 끄는 음량 바 (음악 플레이어 카드 모양)
+        if (hide) {
+            try {
+                val vc = VolumeMediaControl(this)
+                volCtl = vc
+                vc.update(fxParams.master, force = true)
+                scope.launch { paramsFlow.collectLatest { delay(80); vc.update(it.master) } }
+            } catch (_: Exception) { }
+        }
         // 음량 바 ↔ 폰 알람 음량 연동 (바를 움직이면 알람 음량이, 음량 버튼을 누르면 바가 따라 움직임)
         scope.launch { paramsFlow.collect { applyAlarm(it) } }
         scope.launch { while (true) { delay(300); pollAlarm(); checkMusicVolume(); checkDevices() } }
@@ -551,6 +564,8 @@ class EffectService : Service() {
 
     override fun onDestroy() {
         scope.cancel()
+        try { volCtl?.release() } catch (_: Exception) { }
+        volCtl = null
         mainHandler.removeCallbacksAndMessages(null)
         try { getSystemService(AudioManager::class.java).unregisterAudioDeviceCallback(deviceCb) } catch (_: Exception) { }
         if (receiverOn) { try { unregisterReceiver(noisyReceiver) } catch (_: Exception) { }; receiverOn = false }
